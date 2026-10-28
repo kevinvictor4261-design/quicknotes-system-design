@@ -136,3 +136,65 @@ async function createNote(event) {
 
 // Event Listener for Form Submission
 noteForm.addEventListener('submit', createNote);
+// Updated renderNotes function with Delete button
+function renderNotes() {
+  notesList.innerHTML = '';
+
+  if (notesData.length === 0) {
+    const emptyLi = document.createElement('li');
+    emptyLi.className = 'empty-state';
+    emptyLi.textContent = "Your notes list is empty.";
+    notesList.appendChild(emptyLi);
+    return;
+  }
+
+  notesData.forEach(note => {
+    const li = document.createElement('li');
+    li.className = 'note-item';
+
+    const titleH3 = document.createElement('h3');
+    titleH3.textContent = note.title;
+
+    const bodyP = document.createElement('p');
+    bodyP.textContent = note.body;
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'delete-btn';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.type = 'button';
+    deleteBtn.addEventListener('click', () => deleteNote(note.id));
+
+    li.appendChild(titleH3);
+    li.appendChild(bodyP);
+    li.appendChild(deleteBtn);
+
+    notesList.appendChild(li);
+  });
+}
+
+// Task 3: Delete note (DELETE)
+async function deleteNote(id) {
+  statusEl.textContent = `Deleting note ${id}...`;
+  statusEl.className = "status-loading";
+
+  try {
+    await request(`${API_URL}/${id}`, {
+      method: 'DELETE'
+    });
+
+    /*
+      NOTE ON JSONPLACEHOLDER:
+      JSONPlaceholder simulates deletion by returning status 200, 
+      but it does not persist changes on their backend. We filter the deleted 
+      note out of our local 'notesData' array and re-render the list.
+    */
+    notesData = notesData.filter(note => note.id !== id);
+    renderNotes();
+
+    statusEl.textContent = `Note ${id} deleted successfully (Status: 200 OK).`;
+    statusEl.className = "status-success";
+  } catch (error) {
+    statusEl.textContent = `Failed to delete note ${id}: ${error.message}`;
+    statusEl.className = "status-error";
+  }
+}
